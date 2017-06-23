@@ -1,0 +1,33 @@
+#
+#
+
+[nuage_pstack]
+#
+#
+
+[nuage_pstack:children]
+nuage_pstack_controller
+nuage_pstack_node
+#
+# The cluster group contains two subgroups: controller and node
+#
+
+[nuage_pstack_controller]
+os-ans-control ansible_host=147.75.90.205 ansible_user=root
+#
+# The controller group should have only ONE FQDN defined/specified
+#
+
+[nuage_pstack_controller:vars]
+nova_list=['147.75.90.211','147.75.90.207']
+password='admin'
+# If you need to specify a specific ip address for the controller, uncomment the above and edit
+
+[nuage_pstack_node]
+os-ans-nova1 ansible_host=147.75.90.211 ansible_user=root
+os-ans-nova2 ansible_host=147.75.90.207 ansible_user=root
+#
+# FQDNs of hosts assigned the Kubernetes cluster node role
+#
+
+#[nodes:vars]

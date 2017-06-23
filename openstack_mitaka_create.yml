@@ -1,0 +1,43 @@
+# preping all nodes
+
+- hosts: "{{ cluster_name }}_controller"
+
+  become: true
+
+  tasks:
+
+    - name: Pull facts 
+      action: setup
+
+    - name: Copy private key. WARNING! This is sensitive data, do not use at less you're using a temporary key!!!
+      copy:
+        src: /home/dev/.ssh/id_rsa
+        dest: /root/.ssh/id_rsa
+        mode: 0600
+
+    - name: Install some other packages
+      yum:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - centos-release-openstack-mitaka
+        - https://repos.fedorapeople.org/repos/openstack/openstack-mitaka/rdo-release-mitaka-7.noarch.rpm
+
+    - name: yum updates
+      yum: name=* state=latest
+
+    - name: install packstack package
+      yum: name=openstack-packstack state=present
+
+
+# moving some files to controller to run our playbook
+
+- hosts: "{{ cluster_name }}_controller"
+
+  become: true
+  
+  tasks:
+    
+    - name: copying packstack-answers.txt file
+      template: src=packstack-answers.txt.j2 backup=no dest=/root/packstack-answers.txt
+
