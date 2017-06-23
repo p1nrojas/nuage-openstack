@@ -130,7 +130,7 @@
       include_vars: cfg/{{ cluster_name }}/admin_token.yml
 
     - name: Read mariadb_pwd file
-      include_vars: cfg/{{ cluster_name }}/mariadb.yml
+      include_vars: cfg/{{ cluster_name }}/mariadb_pw.yml
 
   tasks:
 
@@ -141,7 +141,7 @@
       template: src=mysql_n_upgrade.sh.j2 backup=no dest=/root/mysql_n_upgrade.sh mode=755
 
     - name: Execute bash last steps
-      shell: /root/mysql_n_upgarde.sh 
+      shell: /root/mysql_n_upgrade.sh > /root/mysql_n_upgrade.log 
 
     - name : restarting openstack services
       service:

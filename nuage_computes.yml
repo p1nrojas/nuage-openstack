@@ -10,7 +10,7 @@
       action: setup
     
     - name: Install epel-release repo
-      yum: namre=epel-release state=present
+      yum: name=epel-release state=present
     
     - name: yum updates
       yum: name=* state=latest
@@ -23,7 +23,7 @@
     
     - name: install the nuage vrs openvswitch rpm from a remote repo
       yum:
-        name: '{{ files_location }}{{ rpm_nuage-openvswitch }}'
+        name: '{{ files_location }}{{ rpm_nuage_openvswitch }}'
         state: present
     
     - name: Remove  additional packages
@@ -33,7 +33,7 @@
     
     - name: install the nuage vrs openvswitch rpm from a remote repo
       yum:
-        name: '{{ files_location }}{{ rpm_nuage-openvswitch }}'
+        name: '{{ files_location }}{{ rpm_nuage_openvswitch }}'
         state: present
     
 # Configuring openvswitch
@@ -74,7 +74,13 @@
         - { regexp: '#metadata_proxy_shared_secret =.*$' , line: 'metadata_proxy_shared_secret =NuageNetworksSharedSecret' }
         - { regexp: '#use_forwarded_for=.*$' , line: 'use_forwarded_for=true' }
         - { regexp: '#instance_name_template=instance-%08x' , line: 'instance_name_template=instance-%08x' }
+        - { regexp: '#novncproxy_host=0.0.0.0' , line: 'novncproxy_host=0.0.0.0' }
 
+    - name: Change vncserver_proxyclient_address at /etc/nova/nova.conf
+      lineinfile:
+        dest: /etc/nova/nova.conf
+        regexp: 'vncserver_proxyclient_address='
+        line: "vncserver_proxyclient_address={{ ansible_host }}"
     
     - name : restarting openvswitch
       service:

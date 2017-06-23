@@ -1,6 +1,6 @@
 #!/bin/bash
 # Insert into mysql
-mysql -uroot -p{{ mariadb_pwd }} <<MYSQL_SCRIPT
+mysql -uroot -p{{ mariadb_pw }} <<MYSQL_SCRIPT
 CREATE DATABASE nuage_neutron;
 GRANT ALL PRIVILEGES ON nuage_neutron.* TO 'nuage_neutron'@'localhost' identified by 'password';
 GRANT ALL PRIVILEGES ON nuage_neutron.* TO 'nuage_neutron'@'%' identified by 'password';
@@ -16,9 +16,9 @@ neutron-db-manage --config-file /etc/neutron/neutron.conf --config-file /etc/neu
 
 # Enable Nuage CMS ID:
 mkdir -p {{ temp_dir }}/upgrade
-cd {{ tem_dir }}/upgrade
-wget {{ files_location }}{{ nuage-openstack-upgrade_files }} $TEMP_DIR
-tar -xzvf {{ nuage-openstack-upgrade_files }}
+cd {{ temp_dir }}/upgrade
+wget {{ files_location }}{{ nuage_openstack_upgrade_files }} $TEMP_DIR
+tar -xzvf {{ nuage_openstack_upgrade_files }}
 
 python generate_cms_id.py --config-file /etc/neutron/plugins/nuage/nuage_plugin.ini
 

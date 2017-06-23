@@ -1,0 +1,5 @@
+# usage: ansible-playbook -i openstack-hosts -e cluster_name=nuage_pstack deploy-all.yml
+#
+- include: openstack_mitaka_create.yml 
+- include: nuage_computes.yml  
+- include: nuage_controller.yml

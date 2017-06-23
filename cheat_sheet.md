@@ -8,6 +8,4 @@ ansible nuage_pstack -i openstack-hosts -m ping -e cluter_name=nuage_pstack
 # Run playbook
 ansible-playbook -i openstack-hosts -e cluster_name=nuage_pstack openstack_mitaka_create.yml
 
-# Destroy cluster
-ansible-playbook -i openstack-hosts -e cluster_name=nuage_pstack nuage-cluster-1.5-destroy.yml
 ```
