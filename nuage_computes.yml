@@ -1,0 +1,85 @@
+# Installing packegs from nuage at compute nodes
+
+- hosts: "{{ cluster_name }}_node"
+
+  become: true
+
+  tasks:
+
+    - name: Pull facts on hypervisor
+      action: setup
+    
+    - name: Install epel-release repo
+      yum: namre=epel-release state=present
+    
+    - name: yum updates
+      yum: name=* state=latest
+    
+    - name: Remove  additional packages
+      yum: name={{ item }} state=absent
+      with_items:
+       - python-openvswitch
+       - openvswitch
+    
+    - name: install the nuage vrs openvswitch rpm from a remote repo
+      yum:
+        name: '{{ files_location }}{{ rpm_nuage-openvswitch }}'
+        state: present
+    
+    - name: Remove  additional packages
+      yum: name={{ item }} state=absent
+      with_items:
+       - openvswitch
+    
+    - name: install the nuage vrs openvswitch rpm from a remote repo
+      yum:
+        name: '{{ files_location }}{{ rpm_nuage-openvswitch }}'
+        state: present
+    
+# Configuring openvswitch
+
+    - name: Add ACTIVE_CONTROLLER to /etc/default/openvswitch
+      lineinfile:
+        dest: /etc/default/openvswitch
+        regexp: 'ACTIVE_CONTROLLER='
+        line: "ACTIVE_CONTROLLER={{ active_controller}}"
+    
+    - name: Add STANDBY_CONTROLLER to /etc/default/openvswitch
+      lineinfile:
+        dest: /etc/default/openvswitch
+        regexp: 'STANDBY_CONTROLLER='
+        line: "STANDBY_CONTROLLER={{ standby_controller }}"
+    
+    - name : restarting openvswitch
+      service:
+        name: openvswitch
+        state: restarted
+
+# Modifying nova.conf files
+
+- hosts: "{{ cluster_name }}_node"
+
+  become: true
+
+  tasks:
+
+    - name: Change /etc/nova/nova.conf
+      lineinfile:
+        dest: /etc/nova/nova.conf
+        regexp: '{{ item.regexp }}'
+        line: "{{ item.line }}"
+      with_items:
+        - { regexp: 'ovs_bridge=br-int' , line: 'ovs_bridge=alubr0' }
+        - { regexp: '#service_metadata_proxy=false' , line: 'service_metadata_proxy=true' }
+        - { regexp: '#metadata_proxy_shared_secret =.*$' , line: 'metadata_proxy_shared_secret =NuageNetworksSharedSecret' }
+        - { regexp: '#use_forwarded_for=.*$' , line: 'use_forwarded_for=true' }
+        - { regexp: '#instance_name_template=instance-%08x' , line: 'instance_name_template=instance-%08x' }
+
+    
+    - name : restarting openvswitch
+      service:
+        name: "{{ item }}"
+        state: restarted
+      with_items:
+        - 'openstack-nova-compute'
+        - 'openvswitch'

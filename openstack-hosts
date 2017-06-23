@@ -19,8 +19,19 @@ os-ans-control ansible_host=147.75.90.205 ansible_user=root
 #
 
 [nuage_pstack_controller:vars]
+vsd_ip='147.75.90.81'
+ntp_server='147.75.90.81'
 nova_list=['147.75.90.211','147.75.90.207']
 password='admin'
+temp_dir='/tmp/nuage/'
+net_partition_name='acme2_corp'
+files_location='https://s3-us-west-2.amazonaws.com/nuage-demo-cala/40r9+files/'
+rpm_nuagenetlib='nuagenetlib40r9.rpm'
+rpm_nuage_openstack_heat='nuage-openstack-heat40r9.rpm'
+rpm_nuage_openstack_horizon='nuage-openstack-horizon40r9.rpm'
+rpm_nuage_openstack_neutron='nuage-openstack-neutron40r9.rpm'
+rpm_nuage_openstack_neutronclient='nuage-openstack-neutronclient40r9.rpm'
+nuage_openstack_upgrade_files='nuage-openstack-upgrade40r9.tar.gz'
 # If you need to specify a specific ip address for the controller, uncomment the above and edit
 
 [nuage_pstack_node]
@@ -30,4 +41,10 @@ os-ans-nova2 ansible_host=147.75.90.207 ansible_user=root
 # FQDNs of hosts assigned the Kubernetes cluster node role
 #
 
-#[nodes:vars]
+[nuage_pstack_node:vars]
+ntp_server='147.75.90.81'
+active_controller='147.75.90.155'
+standby_controller='147.75.90.183'
+temp_dir='/tmp/nuage/'
+files_location='https://s3-us-west-2.amazonaws.com/nuage-demo-cala/40r9+files/'
+rpm_nuage_openvswitch='nuage-openvswitch40r9.rpm'

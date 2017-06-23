@@ -1,0 +1,155 @@
+# Obtaining token and passwords
+
+- hosts: "{{ cluster_name }}_controller"
+
+  become: true
+
+  tasks:
+
+    - name: Create folder plugins
+      file:
+        path: /etc/neutron/plugins/nuage
+        state: directory
+        mode: 0755
+
+    - name: getting token from keystone
+      command: grep -w /etc/keystone/keystone.conf -e '^admin_token ='
+      register: token
+      ignore_errors: true
+
+    - debug:
+        var: token.stdout_lines
+
+    - set_fact:
+        admin_token: "{{ item | regex_replace('^admin_token = ([0-9a-z]{32})$', '\\1') }}"
+      when: '"admin_token" in item'
+      with_items: "{{ token.stdout_lines }}"     
+
+    - debug:
+        var: admin_token 
+
+    - name: getting mariadb_pw from packstack-answers.txt
+      command: grep -w /root/packstack-answers.txt -e '^CONFIG_MARIADB_PW'
+      register: mariadb
+      ignore_errors: true
+
+    - debug:
+        var: mariadb.stdout_lines
+
+    - set_fact:
+        mariadb_pw: "{{ item | regex_replace('^CONFIG_MARIADB_PW=([0-9a-z]{16})$', '\\1') }}"
+      when: '"CONFIG_MARIADB_PW" in item'
+      with_items: "{{ mariadb.stdout_lines }}"
+
+    - debug:
+        var: mariadb_pw
+
+    - name: Save token id
+      shell: "echo admin_token{{ ':' }} {{ admin_token }} > cfg/{{ cluster_name }}/admin_token.yml"
+      delegate_to: 127.0.0.1
+      become: false
+
+    - name: Save MARIADB PWD 
+      shell: "echo mariadb_pw{{ ':' }} {{ mariadb_pw }} > cfg/{{ cluster_name }}/mariadb_pw.yml"
+      delegate_to: 127.0.0.1
+      become: false
+
+# Changing etc files
+#
+- hosts: "{{ cluster_name }}_controller"
+
+  become: true
+
+  tasks:
+
+    - name: Change /etc/nova/nova.conf
+      lineinfile:
+        dest: /etc/nova/nova.conf
+        regexp: '{{ item.regexp }}'
+        line: "{{ item.line }}"
+      with_items:
+        - { regexp: 'ovs_bridge=br-int' , line: 'ovs_bridge=alubr0' }
+        - { regexp: '#metadata_proxy_shared_secret =.*$' , line: 'metadata_proxy_shared_secret =NuageNetworksSharedSecret' }
+        - { regexp: '#use_forwarded_for=.*$' , line: 'use_forwarded_for=true' }
+        - { regexp: '#instance_name_template=instance-%08x' , line: 'instance_name_template=instance-%08x' }
+
+    - name: Change /etc/neutron/neutron.conf
+      lineinfile:
+        dest: /etc/neutron/neutron.conf
+        regexp: '{{ item.regexp }}'
+        line: "{{ item.line }}"
+      with_items:
+        - { regexp: '#api_extensions_path =' , line: 'api_extensions_path =/usr/lib/python2.7/site-packages/nuage_neutron/plugins/nuage/extensions/' }
+        - { regexp: 'core_plugin=.*$' , line: 'core_plugin=nuage_neutron.plugins.nuage.plugin.NuagePlugin' }
+        - { regexp: 'service_plugins=' , line: '#service_plugins=' }
+
+    - name: Stopping neutron services
+      service:
+        name: "{{ item }}"
+        state: stopped
+      with_items:
+        - 'neutron-dhcp-agent.service'
+        - 'neutron-l3-agent.service'
+        - 'neutron-metadata-agent.service'
+        - 'neutron-openvswitch-agent.service'
+        - 'neutron-netns-cleanup.service'
+        - 'neutron-ovs-cleanup.service'
+
+    - name: Disabling neutron services
+      service:
+        name: "{{ item }}"
+        enabled: no
+      with_items:
+        - 'neutron-dhcp-agent.service'
+        - 'neutron-l3-agent.service'
+        - 'neutron-metadata-agent.service'
+        - 'neutron-openvswitch-agent.service'
+        - 'neutron-netns-cleanup.service'
+        - 'neutron-ovs-cleanup.service'
+    
+    - name: install the nuage rpm from a remote repo
+      yum:
+        name: "{{ files_location }}{{ item }}"
+        state: present
+      with_items:
+        - "{{ rpm_nuagenetlib }}"
+        - "{{ rpm_nuage_openstack_heat }}"
+        - "{{ rpm_nuage_openstack_horizon }}"
+        - "{{ rpm_nuage_openstack_neutron }}"
+        - "{{ rpm_nuage_openstack_neutronclient }}"
+
+# Obtaining token and passwords
+
+- hosts: "{{ cluster_name }}_controller"
+
+  become: true
+
+  pre_tasks:
+
+    - name: Read token from file
+      include_vars: cfg/{{ cluster_name }}/admin_token.yml
+
+    - name: Read mariadb_pwd file
+      include_vars: cfg/{{ cluster_name }}/mariadb.yml
+
+  tasks:
+
+    - name: copying nuage_plugin.ini  file
+      template: src=nuage_plugin.ini.j2 backup=no dest=/etc/neutron/plugins/nuage/nuage_plugin.ini 
+
+    - name: copying bash last steps
+      template: src=mysql_n_upgrade.sh.j2 backup=no dest=/root/mysql_n_upgrade.sh mode=755
+
+    - name: Execute bash last steps
+      shell: /root/mysql_n_upgarde.sh 
+
+    - name : restarting openstack services
+      service:
+        name: "{{ item }}"
+        state: restarted
+      with_items:
+        - 'openstack-nova-api'
+        - 'openstack-nova-scheduler'
+        - 'openstack-nova-conductor'
+        - 'neutron-server'
+

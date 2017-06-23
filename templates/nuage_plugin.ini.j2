@@ -1,0 +1,16 @@
+[DATABASE]
+connection = mysql://nuage_neutron:password@{{ ansible_host }}/nuage_neutron?charset=utf8
+
+[KEYSTONE]
+keystone_service_endpoint = http://{{ ansible_host }}:35357/v2.0/
+keystone_admin_token = {{ admin_token }}
+
+[RESTPROXY]
+default_net_partition_name = {{ net_partition_name }}
+auth_resource = /me
+server = {{ vsd_ip }}:8443
+organization = csp
+serverauth = csproot:csproot
+serverssl = True
+base_uri = /nuage/api/v4_0
+default_floatingip_quota = 254

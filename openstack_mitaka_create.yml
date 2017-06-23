@@ -15,6 +15,12 @@
         dest: /root/.ssh/id_rsa
         mode: 0600
 
+    - name: Copy public key
+      copy:
+        src: /home/dev/.ssh/id_rsa.pub
+        dest: /root/.ssh/id_rsa.pub
+        mode: 0644
+
     - name: Install some other packages
       yum:
         name: "{{ item }}"
@@ -37,7 +43,30 @@
   become: true
   
   tasks:
-    
+
     - name: copying packstack-answers.txt file
       template: src=packstack-answers.txt.j2 backup=no dest=/root/packstack-answers.txt
 
+    - name: adding hosts to ~/.ssh/known_hosts
+      shell: "ssh-keyscan -t rsa {{ ansible_host }} | sed -e 's/#.*$//' | sed -e '/^$/d' >> /root/.ssh/known_hosts"
+
+    - name: adding hosts to ~/.ssh/known_hosts
+      shell: "ssh-keyscan -t rsa {{ item }} | sed -e 's/#.*$//' | sed -e '/^$/d' >> /root/.ssh/known_hosts"
+      with_items: "{{ nova_list }}"
+
+    - name: run packstack --answer-file=/root/packstack-answers.txt
+      shell: /usr/bin/packstack --answer-file=/root/packstack-answers.txt > /root/install.log
+
+    - name: check install notes
+      command: tail -12 /root/install.log
+      register: install_notes
+
+    - debug:
+        var: install_notes.stdout_lines
+
+    - name: check  credentials
+      command: tail -10 /root/keystonerc_admin
+      register: keystonerc_admin
+
+    - debug:
+        var: keystonerc_admin.stdout_lines
