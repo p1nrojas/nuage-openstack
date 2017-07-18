@@ -49,6 +49,7 @@
         dest: /etc/default/openvswitch
         regexp: 'STANDBY_CONTROLLER='
         line: "STANDBY_CONTROLLER={{ standby_controller }}"
+      when: standby_controller is defined
     
     - name : restarting openvswitch
       service:
