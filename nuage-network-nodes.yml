@@ -1,0 +1,57 @@
+#
+# run this when nova compute is a network node also
+- hosts: "{{ cluster_name }}_node"
+
+  become: true
+
+  tasks:
+
+    - name: Change /etc/neutron/neutron.conf
+      lineinfile:
+        dest: /etc/neutron/neutron.conf
+        regexp: '{{ item.regexp }}'
+        line: "{{ item.line }}"
+      with_items:
+        - { regexp: '#api_extensions_path =' , line: 'api_extensions_path =/usr/lib/python2.7/site-packages/nuage_neutron/plugins/nuage/extensions/' }
+        - { regexp: 'core_plugin=.*$' , line: 'core_plugin=nuage_neutron.plugins.nuage.plugin.NuagePlugin' }
+        - { regexp: 'service_plugins=' , line: '#service_plugins=' }
+
+    - name: Stopping neutron services
+      service:
+        name: "{{ item }}"
+        state: stopped
+      with_items:
+        - 'neutron-dhcp-agent.service'
+        - 'neutron-l3-agent.service'
+        - 'neutron-metadata-agent.service'
+#        - 'neutron-openvswitch-agent.service'
+        - 'neutron-netns-cleanup.service'
+        - 'neutron-ovs-cleanup.service'
+
+    - name: Disabling neutron services
+      service:
+        name: "{{ item }}"
+        enabled: no
+      with_items:
+        - 'neutron-dhcp-agent.service'
+        - 'neutron-l3-agent.service'
+        - 'neutron-metadata-agent.service'
+#        - 'neutron-openvswitch-agent.service'
+        - 'neutron-netns-cleanup.service'
+        - 'neutron-ovs-cleanup.service'
+
+    - name: install the nuage rpm from a remote repo
+      yum:
+        name: "{{ files_location }}{{ item }}"
+        state: present
+      with_items:
+#        - "{{ rpm_nuage_openstack_neutron }}"
+        - "{{ rpm_nuage_openstack_neutronclient }}"
+
+    - name : restarting openstack services
+      service:
+        name: "{{ item }}"
+        state: restarted
+      with_items:
+        - 'openstack-nova-compute'
+        - 'openvswitch'

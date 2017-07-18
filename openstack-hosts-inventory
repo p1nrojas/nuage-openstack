@@ -1,0 +1,53 @@
+#
+#
+
+[nuage_pstack]
+#
+#
+
+[nuage_pstack:children]
+nuage_pstack_controller
+nuage_pstack_node
+#
+# The cluster group contains two subgroups: controller and node
+#
+
+[nuage_pstack_controller]
+os-ans-control ansible_host=147.75.90.53 ansible_user=root
+#
+# The controller group should have only ONE FQDN defined/specified
+#
+
+[nuage_pstack_controller:vars]
+ntp_server='147.75.68.33'
+vsd_ip='147.75.68.33'
+nova_list=['147.75.68.71','147.75.68.119','147.75.108.33','147.75.90.5',]
+password='admin'
+temp_dir='/tmp/nuage/'
+net_partition_name='ACME_Corp'
+files_location='https://s3-us-west-2.amazonaws.com/nuage-demo-cala/40r10+files/'
+rpm_nuagenetlib='nuagenetlib40r10.rpm'
+rpm_nuage_openstack_heat='nuage-openstack-heat40r10.rpm'
+rpm_nuage_openstack_horizon='nuage-openstack-horizon40r10.rpm'
+rpm_nuage_openstack_neutron='nuage-openstack-neutron40r10.rpm'
+rpm_nuage_openstack_neutronclient='nuage-openstack-neutronclient40r10.rpm'
+nuage_openstack_upgrade_files='nuage-openstack-upgrade40r10.tar.gz'
+# If you need to specify a specific ip address for the controller, uncomment the above and edit
+
+[nuage_pstack_node]
+nova1 ansible_host=147.75.68.71 ansible_user=root
+nova2 ansible_host=147.75.68.119 ansible_user=root
+nova3 ansible_host=147.75.108.33 ansible_user=root
+nova4 ansible_host=147.75.90.5 ansible_user=root
+#
+# FQDNs of hosts assigned the Kubernetes cluster node role
+#
+
+[nuage_pstack_node:vars]
+ntp_server='147.75.68.33'
+active_controller='147.75.68.33' 
+temp_dir='/tmp/nuage/'
+files_location='https://s3-us-west-2.amazonaws.com/nuage-demo-cala/40r10+files/'
+rpm_nuage_openvswitch='nuage-openvswitch40r10.rpm'
+files_location='https://s3-us-west-2.amazonaws.com/nuage-demo-cala/40r10+files/'
+rpm_nuage_openstack_neutronclient='nuage-openstack-neutronclient40r10.rpm'
