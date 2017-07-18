@@ -57,7 +57,7 @@ CONFIG_GNOCCHI_INSTALL=y
 CONFIG_SAHARA_INSTALL=n
 
 # Specify 'y' to install OpenStack Orchestration (heat). ['y', 'n']
-CONFIG_HEAT_INSTALL=n
+CONFIG_HEAT_INSTALL=y
 
 # Specify 'y' to install OpenStack Database (trove) ['y', 'n']
 CONFIG_TROVE_INSTALL=n
@@ -99,7 +99,7 @@ CONFIG_COMPUTE_HOSTS={% for ip in nova_list %}{{ ip }},{% endfor %}
 
 # List of servers on which to install the network service such as
 # Compute networking (nova network) or OpenStack Networking (neutron).
-CONFIG_NETWORK_HOSTS={{ ansible_host }}
+CONFIG_NETWORK_HOSTS={% for ip in nova_list %}{{ ip }},{% endfor %}
 
 # Specify 'y' if you want to use VMware vCenter as hypervisor and
 # storage; otherwise, specify 'n'. ['y', 'n']
@@ -809,7 +809,7 @@ CONFIG_NEUTRON_METADATA_PW=d3f78184736d4e01
 
 # Specify 'y' to install OpenStack Networking's Load-Balancing-
 # as-a-Service (LBaaS). ['y', 'n']
-CONFIG_LBAAS_INSTALL=n
+CONFIG_LBAAS_INSTALL=y
 
 # Specify 'y' to install OpenStack Networking's L3 Metering agent
 # ['y', 'n']
