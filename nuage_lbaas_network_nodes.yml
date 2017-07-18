@@ -1,0 +1,43 @@
+# Installing packegs from nuage at compute nodes
+
+- hosts: "{{ cluster_name }}_node"
+
+  become: true
+
+  tasks:
+
+# Configuring openvswitch
+
+    - name: Update the default section of the neutron.conf
+      lineinfile:
+        dest: /etc/neutron/neutron.conf
+        insertafter: "[DEFAULT]"
+        regexp: 'ovs_integration_bridge'
+        line: "ovs_integration_bridge = alubr0"
+
+    - name: Update the default section of the lbaas_agent.ini 
+      lineinfile:
+        dest: /etc/neutron/lbaas_agent.ini 
+        insertafter: "[DEFAULT]"
+        regexp: '{{ item.regexp }}'
+        line: "{{ item.line }}"
+      with_items:
+        - { regexp: 'ovs_use_veth' , line: 'ovs_use_veth=False' }
+        - { regexp: 'interface_driver' , line: 'interface_driver=nuage_neutron.lbaas.agent.nuage_interface.NuageInterfaceDriver' }
+
+    - name: Install some other packages
+      yum:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - iputils
+        - haproxy
+   
+    - name : restarting openvswitch
+      service:
+        name: "{{ item }}"
+        state: restarted
+      with_items:
+        - 'openvswitch'
+        - 'neutron-lbaasv2-agent'
+ 

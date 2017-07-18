@@ -1,0 +1,35 @@
+# Obtaining token and passwords
+
+- hosts: "{{ cluster_name }}_controller"
+
+  become: true
+
+  tasks:
+   
+    - name: Install some other packages
+      yum:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - python-neutron-lbaas
+
+    - name: Change /etc/neutron/neutron.conf and add neutron_lbaas.services
+      lineinfile:
+        dest: /etc/neutron/neutron.conf
+        regexp: '{{ item.regexp }}'
+        line: "{{ item.line }}"
+      with_items:
+        - { regexp: '#service_plugins=' , line: 'service_plugins=neutron_lbaas.services.loadbalancer.plugin.LoadBalancerPluginv2' }
+        - { regexp: 'service_provider=' , line: 'service_provider=LOADBALANCERV2:Haproxy:neutron_lbaas.drivers.haproxy.plugin_driver.HaproxyOnHostPluginDriver:default
+' }
+
+    - name: Run the update script to add LBaaS fields in the neutron database
+      shell: neutron-db-manage --service lbaas --config-file /etc/neutron/neutron.conf --config-file /etc/neutron/plugins/nuage/nuage_plugin.ini upgrade head
+
+    - name : restarting openstack neutron services
+      service:
+        name: "{{ item }}"
+        state: restarted
+      with_items:
+        - 'neutron-server'
+
