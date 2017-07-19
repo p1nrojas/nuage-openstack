@@ -1,3 +1,31 @@
+# network node needs nuage plugin
+#
+
+- hosts: "{{ cluster_name }}_node"
+
+  become: true
+
+  tasks:
+  pre_tasks:
+
+    - name: Read token from file
+      include_vars: cfg/{{ cluster_name }}/admin_token.yml
+
+    - name: Read mariadb_pwd file
+      include_vars: cfg/{{ cluster_name }}/mariadb_pw.yml
+
+  tasks:
+
+    - name: Create folder plugins
+      file:
+        path: /etc/neutron/plugins/nuage
+        state: directory
+        mode: 0755
+
+    - name: copying nuage_plugin.ini  file
+      template: src=nuage_plugin.ini.j2 backup=no dest=/etc/neutron/plugins/nuage/nuage_plugin.ini 
+
+
 #
 # run this when nova compute is a network node also
 - hosts: "{{ cluster_name }}_node"
@@ -24,7 +52,6 @@
         - 'neutron-dhcp-agent.service'
         - 'neutron-l3-agent.service'
         - 'neutron-metadata-agent.service'
-#        - 'neutron-openvswitch-agent.service'
         - 'neutron-netns-cleanup.service'
         - 'neutron-ovs-cleanup.service'
 
@@ -36,7 +63,6 @@
         - 'neutron-dhcp-agent.service'
         - 'neutron-l3-agent.service'
         - 'neutron-metadata-agent.service'
-#        - 'neutron-openvswitch-agent.service'
         - 'neutron-netns-cleanup.service'
         - 'neutron-ovs-cleanup.service'
 
@@ -45,7 +71,8 @@
         name: "{{ files_location }}{{ item }}"
         state: present
       with_items:
-#        - "{{ rpm_nuage_openstack_neutron }}"
+        - "{{ rpm_nuagenetlib }}"
+        - "{{ rpm_nuage_openstack_neutron }}"
         - "{{ rpm_nuage_openstack_neutronclient }}"
 
     - name : restarting openstack services

@@ -19,7 +19,7 @@
         regexp: '{{ item.regexp }}'
         line: "{{ item.line }}"
       with_items:
-        - { regexp: '#service_plugins=' , line: 'service_plugins=neutron_lbaas.services.loadbalancer.plugin.LoadBalancerPluginv2' }
+        - { regexp: 'service_plugins' , line: 'service_plugins=neutron_lbaas.services.loadbalancer.plugin.LoadBalancerPluginv2' }
         - { regexp: 'service_provider=' , line: 'service_provider=LOADBALANCERV2:Haproxy:neutron_lbaas.drivers.haproxy.plugin_driver.HaproxyOnHostPluginDriver:default
 ' }
 

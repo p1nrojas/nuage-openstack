@@ -45,9 +45,16 @@ nova4 ansible_host=147.75.90.5 ansible_user=root
 
 [nuage_pstack_node:vars]
 ntp_server='147.75.68.33'
-active_controller='147.75.68.33' 
+vsd_ip='147.75.68.33'
+nova_list=['147.75.68.71','147.75.68.119','147.75.108.33','147.75.90.5',]
+password='admin'
 temp_dir='/tmp/nuage/'
+net_partition_name='ACME_Corp'
 files_location='https://s3-us-west-2.amazonaws.com/nuage-demo-cala/40r10+files/'
-rpm_nuage_openvswitch='nuage-openvswitch40r10.rpm'
-files_location='https://s3-us-west-2.amazonaws.com/nuage-demo-cala/40r10+files/'
+rpm_nuagenetlib='nuagenetlib40r10.rpm'
+rpm_nuage_openstack_heat='nuage-openstack-heat40r10.rpm'
+rpm_nuage_openstack_horizon='nuage-openstack-horizon40r10.rpm'
+rpm_nuage_openstack_neutron='nuage-openstack-neutron40r10.rpm'
 rpm_nuage_openstack_neutronclient='nuage-openstack-neutronclient40r10.rpm'
+rpm_nuage_openvswitch='nuage-openvswitch40r10.rpm'
+active_controller='147.75.68.33' 
