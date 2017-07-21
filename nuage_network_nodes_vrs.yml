@@ -1,0 +1,59 @@
+# Installing packegs from nuage at compute nodes
+
+- hosts: "{{ cluster_name }}_controller"
+
+  become: true
+
+  tasks:
+
+    - name: Pull facts on hypervisor
+      action: setup
+    
+    - name: Install epel-release repo
+      yum: name=epel-release state=present
+    
+    - name: yum updates
+      yum: name=* state=latest
+    
+    - name: Remove  additional packages
+      yum: name={{ item }} state=absent
+      with_items:
+       - python-openvswitch
+       - openvswitch
+    
+    - name: install the nuage vrs openvswitch rpm from a remote repo
+      yum:
+        name: '{{ files_location }}{{ rpm_nuage_openvswitch }}'
+        state: present
+    
+    - name: Remove  additional packages
+      yum: name={{ item }} state=absent
+      with_items:
+       - openvswitch
+    
+    - name: install the nuage vrs openvswitch rpm from a remote repo
+      yum:
+        name: '{{ files_location }}{{ rpm_nuage_openvswitch }}'
+        state: present
+    
+# Configuring openvswitch
+
+    - name: Add ACTIVE_CONTROLLER to /etc/default/openvswitch
+      lineinfile:
+        dest: /etc/default/openvswitch
+        regexp: 'ACTIVE_CONTROLLER='
+        line: "ACTIVE_CONTROLLER={{ active_controller}}"
+    
+    - name: Add STANDBY_CONTROLLER to /etc/default/openvswitch
+      lineinfile:
+        dest: /etc/default/openvswitch
+        regexp: 'STANDBY_CONTROLLER='
+        line: "STANDBY_CONTROLLER={{ standby_controller }}"
+      when: standby_controller is defined
+    
+    - name : restarting openvswitch
+      service:
+        name: openvswitch
+        state: restarted
+
+

@@ -99,7 +99,7 @@ CONFIG_COMPUTE_HOSTS={% for ip in nova_list %}{{ ip }},{% endfor %}
 
 # List of servers on which to install the network service such as
 # Compute networking (nova network) or OpenStack Networking (neutron).
-CONFIG_NETWORK_HOSTS={% for ip in nova_list %}{{ ip }},{% endfor %}
+CONFIG_NETWORK_HOSTS={{ ansible_host }}
 
 # Specify 'y' if you want to use VMware vCenter as hypervisor and
 # storage; otherwise, specify 'n'. ['y', 'n']

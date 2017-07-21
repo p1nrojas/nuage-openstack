@@ -1,6 +1,7 @@
 # Installing packegs from nuage at compute nodes
 
-- hosts: "{{ cluster_name }}_node"
+#- hosts: "{{ cluster_name }}_node"
+- hosts: "{{ cluster_name }}_controller"
 
   become: true
 
@@ -25,7 +26,7 @@
     - name: Update the default section of the lbaas_agent.ini 
       lineinfile:
         dest: /etc/neutron/lbaas_agent.ini 
-        insertafter: "^\[DEFAULT\]"
+        insertafter: '^\[DEFAULT\]'
         regexp: '{{ item.regexp }}'
         line: "{{ item.line }}"
       with_items:
@@ -47,4 +48,7 @@
       with_items:
         - 'openvswitch'
         - 'neutron-lbaasv2-agent'
- 
+    
+    - name: kill lbaasv1 process
+      shell: kill `ps aux | grep -F 'neutron-lbaas-agent' | grep -v -F 'grep' | awk '{ print $2 }'` 
+      ignore_errors: yes
