@@ -1,0 +1,86 @@
+# preping all nodes
+
+- hosts: "{{ cluster_name }}_controller"
+
+  become: true
+
+  tasks:
+
+    - name: Pull facts 
+      action: setup
+
+    - name: Copy private key. WARNING! This is sensitive data, do not use at less you're using a temporary key!!!
+      copy:
+        src: /home/dev/.ssh/id_rsa
+        dest: /root/.ssh/id_rsa
+        mode: 0600
+
+    - name: Copy public key
+      copy:
+        src: /home/dev/.ssh/id_rsa.pub
+        dest: /root/.ssh/id_rsa.pub
+        mode: 0644
+
+    - name: Install some other packages
+      yum:
+        name: 'centos-release-openstack-{{ openstack_release }}'
+        state: present
+    - name: "Get info about rpms"
+      uri:
+        url: "https://repos.fedorapeople.org/repos/openstack/openstack-{{ openstack_release }}"
+        method: GET
+        return_content: yes
+      register: response
+
+    - debug: msg="{{ response.content | regex_findall('href=\"rdo-release-newton-(\d+).noarch.rpm\">') }}"
+
+    - set_fact: release_numbers="{{ response.content | regex_findall('href=\"rdo-release-newton-(\d+).noarch.rpm\">') }}"
+
+    - debug: msg="{{ release_numbers | last }}"
+
+    - name: Install some other packages
+      yum:
+        name: 'https://repos.fedorapeople.org/repos/openstack/openstack-{{ openstack_release }}/rdo-release-{{ openstack_release }}-{{ release_numbers | last }}.noarch.rpm'
+        state: present
+
+    - name: yum updates
+      yum: name=* state=latest
+
+    - name: install packstack package
+      yum: name=openstack-packstack state=present
+
+
+# moving some files to controller to run our playbook
+
+- hosts: "{{ cluster_name }}_controller"
+
+  become: true
+  
+  tasks:
+
+    - name: copying packstack-answers.txt file
+      template: src=packstack-answers.txt.j2 backup=no dest=/root/packstack-answers.txt
+
+    - name: adding hosts to ~/.ssh/known_hosts
+      shell: "ssh-keyscan -t rsa {{ ansible_host }} | sed -e 's/#.*$//' | sed -e '/^$/d' >> /root/.ssh/known_hosts"
+
+    - name: adding hosts to ~/.ssh/known_hosts
+      shell: "ssh-keyscan -t rsa {{ item }} | sed -e 's/#.*$//' | sed -e '/^$/d' >> /root/.ssh/known_hosts"
+      with_items: "{{ nova_list }}"
+
+    - name: run packstack --answer-file=/root/packstack-answers.txt
+      shell: /usr/bin/packstack --answer-file=/root/packstack-answers.txt > /root/install.log
+
+    - name: check install notes
+      command: tail -12 /root/install.log
+      register: install_notes
+
+    - debug:
+        var: install_notes.stdout_lines
+
+    - name: check  credentials
+      command: tail -10 /root/keystonerc_admin
+      register: keystonerc_admin
+
+    - debug:
+        var: keystonerc_admin.stdout_lines
